@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using HubicDrive.Forms;
 using System.IO;
 using HubicDrive.Hubic;
+using System.Net.Http.Handlers;
 
 namespace HubicDrive.Controls {
 	public partial class QueueListViewItem : ListViewItem {
@@ -111,7 +112,7 @@ namespace HubicDrive.Controls {
 		}
 
 
-		public void Start() {
+		public async void Start() {
 			if (this.Status == "running")
 				return;
 
@@ -121,9 +122,9 @@ namespace HubicDrive.Controls {
 			QueueForm form = this.GetForm();
 
 			if (this.Direction == "upload") {
-				HubicSignature signature = form.HAPI.GetSignature(this.Container, this.RemotePath, this.LocalPath);
-				//this.wc = form.OSAPI.UploadObject(this.Container, this.RemotePath, this.LocalPath, signature.signature, signature.maxFileSize, signature.expires, this.UploadProgressChanged, this.TransferCompleted);
-				form.OSAPI.UploadObject(this.Container, this.RemotePath + "/", this.LocalPath, signature.signature, signature.maxFileSize, signature.expires, this.TransferProgressChanged, this.TransferCompleted);
+				//HubicSignature signature = form.HAPI.GetSignature(this.Container, this.RemotePath, this.LocalPath);
+				this.wc = form.OSAPI.UploadObject(this.Container, this.RemotePath, this.LocalPath, this.UploadProgressChanged, this.TransferCompleted);
+				//await form.OSAPI.UploadObject(this.Container, this.RemotePath + "/", this.LocalPath, signature.signature, signature.maxFileSize, signature.expires, this.TransferProgressChanged, this.TransferCompleted);
 
 			} else if (this.Direction == "download") {
 				this.wc = form.OSAPI.DownloadObject(this.Container, this.RemotePath, this.LocalPath, this.DownloadProgressChanged, this.TransferCompleted);
@@ -137,6 +138,7 @@ namespace HubicDrive.Controls {
 
 			this.wc.CancelAsync();
 
+			this.Progress = "Cancelled";
 			this.Status = "stopped";
 		}
 
@@ -152,15 +154,15 @@ namespace HubicDrive.Controls {
 
 
 		private void UpdateProgress(long transfered, int percentage) {
-			this.Progress = percentage.ToString();
-
-			this.Progress = this.Progress + "%";
-
 			if (this.LastUpdate == null)
 				this.LastUpdate = DateTime.Now;
 
-			if ((DateTime.Now - this.LastUpdate).Seconds > 1)
+			if ((DateTime.Now - this.LastUpdate).Seconds > 1) {
+				this.Progress = percentage.ToString();
+				this.Progress += "%";
+
 				this.SubItems["speed"].Text = this.GetSpeed(transfered);
+			}
 		}
 
 
@@ -169,8 +171,13 @@ namespace HubicDrive.Controls {
 		}
 
 
-		private void TransferProgressChanged(object sender, SWCTransferProgressChangedEventArgs e) {
-			this.UpdateProgress(e.BytesTransfered, e.ProgressPercentage);
+		private void UploadProgressChanged(object sender, UploadProgressChangedEventArgs e) {
+			this.UpdateProgress(e.BytesSent, e.ProgressPercentage);
+		}
+
+
+		private void TransferProgressChanged(object sender, HttpProgressEventArgs e) {
+			this.UpdateProgress(e.BytesTransferred, e.ProgressPercentage);
 		}
 
 
@@ -197,20 +204,23 @@ namespace HubicDrive.Controls {
 		}
 
 		private void TransferCompleted(object sender, AsyncCompletedEventArgs e) {
+			this.SubItems["speed"].Text = "";
+			this.Status = "stopped";
+			this.wc.Dispose();
+
 			if (e.Cancelled) {
 				this.Progress = "Cancelled";
-				this.SubItems["speed"].Text = "";
 				return;
 			}
 
 			if (e.Error != null) {
+				MessageBox.Show(e.Error.ToString());
 				this.Progress = "Error";
-				this.SubItems["speed"].Text = "";
+				this.Start();
 				return;
 			}
 
 			this.Progress = "Finished";
-			this.SubItems["speed"].Text = "";
 			this.Status = "finished";
 
 			QueueForm queueForm = this.GetForm();

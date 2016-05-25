@@ -15,15 +15,11 @@ C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Flurl.Http.dll
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Marvin.JsonPatch.dll
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Newtonsoft.Json.dll
-C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.dll
-C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.WebRequest.dll
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Flurl.pdb
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Flurl.xml
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Flurl.Http.pdb
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Flurl.Http.xml
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\Newtonsoft.Json.xml
-C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.xml
-C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.WebRequest.xml
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.exe
 C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.pdb
 C:\Users\oscarc\documents\visual studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.exe
@@ -52,3 +48,5 @@ C:\Users\oscarc\documents\visual studio 2015\Projects\HubicDrive\HubicDrive\obj\
 C:\Users\oscarc\documents\visual studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.Forms.HubicDriveForm.resources
 C:\Users\oscarc\documents\visual studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.Forms.ConfirmationForm.resources
 C:\Users\oscarc\documents\visual studio 2015\Projects\HubicDrive\HubicDrive\obj\Debug\HubicDrive.Forms.QueueForm.resources
+C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.Formatting.dll
+C:\Users\ragnar\Documents\Visual Studio 2015\Projects\HubicDrive\HubicDrive\bin\Debug\System.Net.Http.Formatting.xml

@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using HubicDrive.Hubic;
 using System.IO;
 using HubicDrive.Controls;
+using System.Net.Http.Handlers;
 
 namespace HubicDrive.OpenStack {
 	public class OpenStackAPI {
@@ -17,13 +18,29 @@ namespace HubicDrive.OpenStack {
 
 
 		public OpenStackAPI(HubicAPI HAPI) {
-			JObject credentials = JObject.Parse("{\"token\":\"33b96f08ae284411a138da6b85f43c9e\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
+			JObject credentials = JObject.Parse("{\"token\":\"c0c9987864344fdeae3c55d7a63ec66a\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
 			//JObject credentials = JObject.Parse(HAPI.getCredentials());
 			Debug.WriteLine(credentials.ToString());
 
+/*			Configuration Config = new Configuration();
+			this.expires = Config.Get("expires", null, true);
+
+			if (this.expires != null && DateTime.Now < DateTime.Parse(this.expires)) {
+				this.token = Config.Get("token", null, true);
+				this.endpoint = Config.Get("endpoint", null, true);
+
+				return;
+			}
+
+			JObject credentials = JObject.Parse(HAPI.getCredentials());
+			*/
 			this.token = (string) credentials.SelectToken("token");
 			this.endpoint = (string) credentials.SelectToken("endpoint");
 			this.expires = (string) credentials.SelectToken("expires");
+			/*
+			Config.Set("token", this.token, true);
+			Config.Set("endpoint", this.endpoint, true);
+			Config.Set("expires", this.expires, true);*/
 		}
 
 
@@ -51,13 +68,13 @@ namespace HubicDrive.OpenStack {
 			}
 		}
 
-
-		public async Task<SuperWebClient> UploadObject(string container, string remotePath, string localPath, string signature, string maxFileSize, string expires, Action<object, SWCTransferProgressChangedEventArgs> transferProgressChangedCallback, Action<object, SWCTransferCompletedEventArgs> transferCompletedCallback) {
+		/*
+		public async Task<SuperWebClient> UploadObject(string container, string remotePath, string localPath, string signature, string maxFileSize, string expires, Action<object, HttpProgressEventArgs> transferProgressChangedCallback, Action<object, SWCTransferCompletedEventArgs> transferCompletedCallback) {
 			SuperWebClient mwc = new SuperWebClient();
-/*
-			mwc.TransferProgressChanged += new SuperWebClient.TransferProgressChangedHandler(transferProgressChangedCallback);
+
+			mwc.progressHandler.HttpSendProgress += new EventHandler<HttpProgressEventArgs>(transferProgressChangedCallback);
 			mwc.TransferCompleted += new SuperWebClient.TransferCompletedHandler(transferCompletedCallback);
-			*/
+			
 			mwc.AddValue("max_file_size", maxFileSize);
 			mwc.AddValue("max_file_count", "1");
 			mwc.AddValue("expires", expires);
@@ -69,23 +86,29 @@ namespace HubicDrive.OpenStack {
 			await mwc.MultipartUploadTaskAsync(this.endpoint + "/" + container + "/" + remotePath);
 
 			return mwc;
-		}
+		}*/
 
-		/*
-		public WebClient UploadObject(string container, string remotePath, string localPath, string signature, string maxFileSize, string expires, Action<object, UploadProgressChangedEventArgs> uploadProgressChangedCallback, Action<object, UploadFileCompletedEventArgs> uploadCompletedCallback) {
+		
+		public WebClient UploadObject(string container, string remotePath, string localPath, Action<object, UploadProgressChangedEventArgs> uploadProgressChangedCallback, Action<object, UploadFileCompletedEventArgs> uploadCompletedCallback) {
 			using (WebClient wc = new WebClient()) {
 				wc.Headers.Add("X-Auth-Token", this.token);
 
 				wc.UploadProgressChanged += new UploadProgressChangedEventHandler(uploadProgressChangedCallback);
 				wc.UploadFileCompleted += new UploadFileCompletedEventHandler(uploadCompletedCallback);
 
-				string url = this.endpoint + "/" + container + "/" + remotePath;
+				string url = this.endpoint + "/" + container;
+
+				if (remotePath.Length > 0)
+					url += "/" + remotePath;
+
+				url += "/" + Path.GetFileName(localPath);
+
 				wc.UploadFileTaskAsync(url, "PUT", localPath);
 
 				return wc;
 			}
 		}
-		*/
+		
 
 		public WebClient DownloadObject(string container, string remotePath, string localPath, Action<object, DownloadProgressChangedEventArgs> downloadProgressChangedCallback, Action<object, AsyncCompletedEventArgs> downloadCompletedCallback) {
 			using (WebClient wc = new WebClient()) {
@@ -93,9 +116,8 @@ namespace HubicDrive.OpenStack {
 
 				wc.DownloadProgressChanged += new DownloadProgressChangedEventHandler(downloadProgressChangedCallback);
 				wc.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadCompletedCallback);
-				string url = this.endpoint + "/" + container + "/" + remotePath;
 
-				wc.DownloadFileTaskAsync(url, localPath);
+				wc.DownloadFileTaskAsync(this.endpoint + "/" + container + "/" + remotePath, localPath);
 
 				return wc;
 			}

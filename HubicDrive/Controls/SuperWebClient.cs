@@ -1,32 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Net.Http.Handlers;
 using System.Net.Http.Headers;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows.Forms;
 
 namespace HubicDrive.Controls {
 	public class SuperWebClient {
 		private NameValueCollection Values = new NameValueCollection();
 		private NameValueCollection Files = new NameValueCollection();
-		private long BytesTransfered = 0;
-		private string Boundary;
-		private string Trail;
-
-
-		public SuperWebClient() {
-		}
-
+		public ProgressMessageHandler progressHandler = new ProgressMessageHandler();
 
 		public void AddValue(string name, string value) {
 			this.Values.Add(name, value);
@@ -38,30 +23,34 @@ namespace HubicDrive.Controls {
 		}
 
 
-		public Task<HttpResponseMessage> MultipartUploadTaskAsync(string url) {
+		public async Task<HttpResponseMessage> MultipartUploadTaskAsync(string url) {
 			//https://blogs.msdn.microsoft.com/johan/2006/11/15/are-you-getting-outofmemoryexceptions-when-uploading-large-files/
+			Control.CheckForIllegalCrossThreadCalls = false;
 
-			using (HttpClient client = new HttpClient()) {
+			//HttpClientHandler handler = new HttpClientHandler();
+
+//			ProgressMessageHandler progressHandler = new ProgressMessageHandler();
+//			progressHandler.HttpSendProgress += this.OnTransferProgressChanged;
+
+			using (HttpClient client = HttpClientFactory.Create(progressHandler)) {
+				client.Timeout = TimeSpan.FromDays(5);
+
 				using (MultipartFormDataContent content = new MultipartFormDataContent()) {
 					string value;
 
 					foreach (string name in this.Values) {
 						value = this.Values[name];
+
 						content.Add(new StringContent(value), name);
 					}
 
-					MessageBox.Show("reading files");
-
-					//StreamContent fileContent;
 					foreach (string name in this.Files) {
-						value = this.Values[name];
+						value = this.Files[name];
 
-						ByteArrayContent fileStream = new ByteArrayContent(File.ReadAllBytes(value));
+						StreamContent fileStream = new StreamContent(new FileStream(value, FileMode.Open, FileAccess.Read));
 						fileStream.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-						content.Add(fileStream, name, value);
+						content.Add(fileStream, name, Path.GetFileName(value));
 					}
-					MessageBox.Show("running post");
-					MessageBox.Show(url);
 
 					HttpRequestHeaders headers = client.DefaultRequestHeaders;
 					headers.ExpectContinue = false;
@@ -74,11 +63,14 @@ namespace HubicDrive.Controls {
 					headers.TryAddWithoutValidation("Accept-Encoding", "gzip,deflate");
 					headers.TryAddWithoutValidation("Accept-Language", "es-ES");
 
-					return client.PostAsync(url, content);
+					HttpResponseMessage response = await client.PostAsync(url, content);
+					this.OnTransferCompleted();
+
+					return response;
 				}
 			}
 		}
-		/*
+
 		public delegate void TransferProgressChangedHandler(object o, SWCTransferProgressChangedEventArgs e);
 		public event TransferProgressChangedHandler TransferProgressChanged;
 
@@ -86,15 +78,15 @@ namespace HubicDrive.Controls {
 		public event TransferCompletedHandler TransferCompleted;
 
 
-		public void OnTransferProgressChanged() {
+		private void OnTransferProgressChanged(object sender, HttpProgressEventArgs e) {
 			if (this.TransferProgressChanged != null)
-				this.TransferProgressChanged.Invoke(this, new SWCTransferProgressChangedEventArgs(this.BytesTransfered, this.Request.ContentLength));
+				this.TransferProgressChanged.Invoke(this, new SWCTransferProgressChangedEventArgs(e.BytesTransferred, (long) e.TotalBytes));
 		}
-
+		
 
 		private void OnTransferCompleted() {
 			if (this.TransferCompleted != null)
 				this.TransferCompleted.Invoke(this, new SWCTransferCompletedEventArgs());
-		}*/
+		}
 	}
 }
