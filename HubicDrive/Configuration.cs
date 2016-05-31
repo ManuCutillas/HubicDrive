@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Security.Cryptography;
 using System.Text;
+using System.Windows.Forms;
 
 namespace HubicDrive {
 	class Configuration {
@@ -18,6 +19,7 @@ namespace HubicDrive {
 					return encrypted ? this.Decrypt(settings[name]) : settings[name];
 
 			} catch (Exception e) {
+				MessageBox.Show(e.ToString());
 				return "";
 			}
 

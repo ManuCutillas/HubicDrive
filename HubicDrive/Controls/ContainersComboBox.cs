@@ -46,8 +46,8 @@ namespace HubicDrive.Controls {
 
 					this.OSContainers.Add(container.Name, container);
 
-					if (container.Name.IndexOf("_segments") != -1)
-						continue;
+					//if (container.Name.IndexOf("_segments") != -1)
+						//continue;
 
 					this.Items.Add(container.Name);
 				}

@@ -114,7 +114,7 @@ namespace HubicDrive.Hubic {
 
 					this.code = match.Groups[1].Value;
 
-				} catch (WebException e) {
+				} catch (Exception e) {
 					if (this.connectionStatus != null)
 						this.connectionStatus.SetStatus("Connecting...", tries * 5 + 20);
 

@@ -122,8 +122,8 @@ namespace HubicDrive.Controls {
 			QueueForm form = this.GetForm();
 
 			if (this.Direction == "upload") {
-				//HubicSignature signature = form.HAPI.GetSignature(this.Container, this.RemotePath, this.LocalPath);
 				this.wc = form.OSAPI.UploadObject(this.Container, this.RemotePath, this.LocalPath, this.UploadProgressChanged, this.TransferCompleted);
+				//HubicSignature signature = form.HAPI.GetSignature(this.Container, this.RemotePath, this.LocalPath);
 				//await form.OSAPI.UploadObject(this.Container, this.RemotePath + "/", this.LocalPath, signature.signature, signature.maxFileSize, signature.expires, this.TransferProgressChanged, this.TransferCompleted);
 
 			} else if (this.Direction == "download") {
