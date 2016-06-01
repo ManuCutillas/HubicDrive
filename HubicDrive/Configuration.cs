@@ -18,8 +18,7 @@ namespace HubicDrive {
 				if (settings[name] != null)
 					return encrypted ? this.Decrypt(settings[name]) : settings[name];
 
-			} catch (Exception e) {
-				MessageBox.Show(e.ToString());
+			} catch (Exception) {
 				return "";
 			}
 
@@ -32,11 +31,14 @@ namespace HubicDrive {
 
 			KeyValueConfigurationCollection settings = file.AppSettings.Settings;
 
+			if (encrypted)
+				value = this.Encrypt(value);
+
 			if (settings[name] == null) {
 				settings.Add(name, value);
 
 			} else {
-				settings[name].Value = encrypted ? this.Encrypt(value) : value;
+				settings[name].Value = value;
 			}
 
 			file.Save(ConfigurationSaveMode.Modified);

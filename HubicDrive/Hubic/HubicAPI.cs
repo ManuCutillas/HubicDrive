@@ -13,11 +13,9 @@ namespace HubicDrive.Hubic {
 		private string Login = null;
 		private string Password = null;
 		private readonly string ClientId = "api_hubic_Whv005ooGyoXATgXAw77MmL5KuEfrf7Y";
-		private string Authorization = null;
 		private string RefreshToken = null;
 		private readonly string ClientSecret = "8pXxSAHJ0C4ieLfX4pxwEJabaGZjj2Ci5kPloYauRdgW0IcElIlSiwiljB4zzPs1";
 		private string BaseUrl = "https://api.hubic.com/";
-		public string AccessToken = null;
 		private ConnectionStatus ConnectionStatus;
 
 
@@ -30,7 +28,10 @@ namespace HubicDrive.Hubic {
 
 		private string GetOAuthID() {
 			SuperWebClient swc = new SuperWebClient();
+
 			swc.MaxTries = 10;
+			swc.AllowAutoRedirect = false;
+
 			swc.Values.Add("client_id", this.ClientId);
 			swc.Values.Add("redirect_uri", "http://localhost:8081/");
 			swc.Values.Add("scope", "credentials.r");
@@ -51,7 +52,6 @@ namespace HubicDrive.Hubic {
 
 		private string GetCode() {
 			SuperWebClient swc = new SuperWebClient();
-			swc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
 
 			swc.MaxTries = 10;
 			swc.AllowAutoRedirect = false;
@@ -75,83 +75,50 @@ namespace HubicDrive.Hubic {
 		}
 
 
-		private string getAuthorization() {
-			if (this.Authorization != null)
-				return this.Authorization;
+		private string GetAccessToken() {
+			SuperWebClient swc = new SuperWebClient();
+			swc.Headers[HttpRequestHeader.Authorization] = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(this.ClientId + ":" + this.ClientSecret));
 
-			this.Authorization = Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(this.ClientId + ":" + this.ClientSecret));
-
-			if (this.ConnectionStatus != null)
-				this.ConnectionStatus.SetStatus("Status: connecting...", 60);
-
-			return this.Authorization;
-		}
-
-
-		private string getAccessToken() {
-			string parameters = "";
+			swc.MaxTries = 10;
+			swc.AllowAutoRedirect = false;
+			swc.UseDefaultCredentials = true;
+			swc.Credentials = new NetworkCredential(this.ClientId, this.ClientSecret);
 
 			if (this.RefreshToken == null) {
-				parameters = "code=" + this.GetCode();
-				parameters += "&redirect_uri=http%3A%2F%2Flocalhost%3A8081%2F";
-				parameters += "&grant_type=authorization_code";
+				swc.Values.Add("code", this.GetCode());
+				swc.Values.Add("redirect_uri", "http://localhost:8081/");
+				swc.Values.Add("grant_type", "authorization_code");
 
 			} else {
-				parameters = "refresh_token=" + this.RefreshToken;
-				parameters += "&grant_type=refresh_token";
+				swc.Values.Add("refresh_token", this.RefreshToken);
+				swc.Values.Add("grant_type", "refresh_token");
 			}
 
-			byte[] data = Encoding.UTF8.GetBytes(parameters);
+			string response = System.Text.Encoding.Default.GetString(swc.UploadValues(this.BaseUrl + "oauth/token/", swc.Values));
 
-			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.BaseUrl + "oauth/token/");
-			request.Headers[HttpRequestHeader.Authorization] = "Basic " + this.getAuthorization();
-			request.Method = "POST";
-			request.ContentType = "application/x-www-form-urlencoded";
-			request.AllowAutoRedirect = false;
-			request.ContentLength = data.Length;
+			swc.Dispose();
 
-			using (Stream stream = request.GetRequestStream()) {
-				stream.Write(data, 0, data.Length);
-			}
-
-			HttpWebResponse response = (HttpWebResponse) request.GetResponse();
-
-			JObject jsonResponse = new JObject();
-			using (StreamReader sReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)) {
-				jsonResponse = JObject.Parse(sReader.ReadToEnd());
-			}
-
-			response.Close();
+			JObject jsonObject = JObject.Parse(response);
 
 			if (this.RefreshToken == null)
-				this.RefreshToken = (string) jsonResponse.SelectToken("refresh_token");
+				this.RefreshToken = (string) jsonObject.SelectToken("refresh_token");
 
 			if (this.ConnectionStatus != null)
 				this.ConnectionStatus.SetStatus("Status: connecting...", 80);
 
-			return (string) jsonResponse.SelectToken("access_token");
+			return (string) jsonObject.SelectToken("access_token");
 		}
 
 
-		public string getCredentials() {
-			string accessToken = this.getAccessToken();
+		public JObject getCredentials() {
+			SuperWebClient swc = new SuperWebClient();
+			swc.Headers[HttpRequestHeader.Authorization] = "Bearer " + this.GetAccessToken();
 
-			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.BaseUrl + "1.0/account/credentials");
-			request.Headers[HttpRequestHeader.Authorization] = "Bearer " + this.getAccessToken();
+			string response = swc.DownloadString(this.BaseUrl + "1.0/account/credentials");
 
-			HttpWebResponse response = (HttpWebResponse) request.GetResponse();
+			swc.Dispose();
 
-			string credentials;
-			using (StreamReader sReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)) {
-				credentials = sReader.ReadToEnd();
-			}
-
-			response.Close();
-
-			if (this.ConnectionStatus != null)
-				this.ConnectionStatus.SetStatus("Status: connecting...", 100);
-
-			return credentials;
+			return JObject.Parse(response);
 		}
 
 		

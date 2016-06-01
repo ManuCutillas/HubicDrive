@@ -19,7 +19,7 @@ namespace HubicDrive.OpenStack {
 
 		public OpenStackAPI(HubicAPI HAPI) {
          //JObject credentials = JObject.Parse("{\"token\":\"2963b58b762742c4a3e25721860a7ae3\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
-         JObject credentials = JObject.Parse(HAPI.getCredentials());
+         JObject credentials = HAPI.getCredentials();
 			Debug.WriteLine(credentials.ToString());
 
 /*			Configuration Config = new Configuration();
