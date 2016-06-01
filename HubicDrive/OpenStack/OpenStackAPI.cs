@@ -114,23 +114,25 @@ namespace HubicDrive.OpenStack {
 		}
 		
 
-		public WebClient DownloadObject(string container, string remotePath, string localPath, Action<object, DownloadProgressChangedEventArgs> downloadProgressChangedCallback, Action<object, AsyncCompletedEventArgs> downloadCompletedCallback) {
-			using (WebClient wc = new WebClient()) {
-				wc.Headers.Add("X-Auth-Token", this.token);
+		public SuperWebClient DownloadObject(string container, string remotePath, string localPath, Action<object, DownloadProgressChangedEventArgs> downloadProgressChangedCallback, Action<object, AsyncCompletedEventArgs> downloadCompletedCallback) {
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.Headers.Add("X-Auth-Token", this.token);
 
-				wc.DownloadProgressChanged += new DownloadProgressChangedEventHandler(downloadProgressChangedCallback);
-				wc.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadCompletedCallback);
+				swc.MaxTries = 10;
 
-				wc.DownloadFileTaskAsync(this.endpoint + "/" + container + "/" + remotePath, localPath);
+				swc.DownloadProgressChanged += new DownloadProgressChangedEventHandler(downloadProgressChangedCallback);
+				swc.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadCompletedCallback);
 
-				return wc;
+				swc.DownloadFileTaskAsync(this.endpoint + "/" + container + "/" + remotePath, localPath);
+
+				return swc;
 			}
 		}
 
 
 		public async Task<JArray> GetObjects(string container = null, string remotePath = null) {
-			using (WebClient wc = new WebClient()) {
-				wc.Headers.Add("X-Auth-Token", this.token);
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.Headers.Add("X-Auth-Token", this.token);
 
 				string url = this.endpoint;
 
@@ -142,7 +144,7 @@ namespace HubicDrive.OpenStack {
 				if (remotePath != null)
 					url += "&path=" + WebUtility.UrlEncode(remotePath);
 
-				return JArray.Parse(await wc.DownloadStringTaskAsync(url));
+				return JArray.Parse(await swc.DownloadStringTaskAsync(url));
 			}
 		}
 	}

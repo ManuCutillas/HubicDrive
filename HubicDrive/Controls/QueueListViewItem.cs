@@ -202,6 +202,7 @@ namespace HubicDrive.Controls {
 
 			this.Progress = "Finished";
 			this.Status = "finished";
+			this.SubItems["eta"].Text = "";
 
 			QueueForm queueForm = this.GetForm();
 			queueForm.Start(new object(), new EventArgs());
