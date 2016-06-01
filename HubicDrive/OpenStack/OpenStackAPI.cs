@@ -18,8 +18,8 @@ namespace HubicDrive.OpenStack {
 
 
 		public OpenStackAPI(HubicAPI HAPI) {
-         //JObject credentials = JObject.Parse("{\"token\":\"2963b58b762742c4a3e25721860a7ae3\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
-         JObject credentials = HAPI.getCredentials();
+			JObject credentials = JObject.Parse("{\"token\":\"5024b1538fe94a60a03702498e412508\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
+			//JObject credentials = HAPI.getCredentials();
 			Debug.WriteLine(credentials.ToString());
 
 /*			Configuration Config = new Configuration();
@@ -59,8 +59,9 @@ namespace HubicDrive.OpenStack {
 				try {
 					await wc.UploadStringTaskAsync(url, "PUT", "");
 
-				} catch (WebException e) {
-					MessageBox.Show(e.ToString());
+				} catch (WebException we) {
+					MessageBox.Show(we.ToString());
+
 					return false;
 				}
 
@@ -68,7 +69,30 @@ namespace HubicDrive.OpenStack {
 			}
 		}
 
-		
+
+		public async Task<bool> DeleteObject(string container, string remotePath = null) {
+			using (WebClient wc = new WebClient()) {
+				wc.Headers.Add("X-Auth-Token", this.token);
+
+				string url = this.endpoint + "/" + WebUtility.UrlEncode(container);
+
+				if (remotePath != null && remotePath.Length > 0)
+					url += WebUtility.UrlEncode(remotePath);
+
+				try {
+					await wc.UploadStringTaskAsync(url, "DELETE", "");
+
+				} catch (WebException we) {
+					MessageBox.Show(we.ToString());
+
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+
 		public WebClient UploadObject(string container, string remotePath, string localPath, Action<object, UploadProgressChangedEventArgs> uploadProgressChangedCallback, Action<object, UploadFileCompletedEventArgs> uploadCompletedCallback) {
 			using (WebClient wc = new WebClient()) {
 				wc.Headers.Add("X-Auth-Token", this.token);
@@ -120,24 +144,6 @@ namespace HubicDrive.OpenStack {
 
 				return JArray.Parse(await wc.DownloadStringTaskAsync(url));
 			}
-		}
-
-
-		public async Task<bool> DeleteObject(string remotePath) {
-			using (WebClient wc = new WebClient()) {
-				wc.Headers.Add("X-Auth-Token", this.token);
-
-				try {
-					await wc.UploadStringTaskAsync(this.endpoint + "/" + remotePath, "DELETE", "");
-
-				} catch (WebException e) {
-					MessageBox.Show(this.endpoint + "/" + remotePath);
-					MessageBox.Show(e.ToString());
-					return false;
-				}
-			}
-
-			return true;
 		}
 	}
 }

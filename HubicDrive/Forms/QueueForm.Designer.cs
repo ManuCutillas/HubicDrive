@@ -43,6 +43,7 @@
 			this.sizeHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.porgressHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.speedHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.etaHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.directionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.toolStrip1.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
@@ -178,6 +179,7 @@
             this.sizeHeader,
             this.porgressHeader,
             this.speedHeader,
+            this.etaHeader,
             this.directionHeader});
 			this.queueListView.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.queueListView.FullRowSelect = true;
@@ -217,6 +219,11 @@
 			// 
 			this.speedHeader.Text = "Speed";
 			this.speedHeader.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// etaHeader
+			// 
+			this.etaHeader.Text = "ETA";
+			this.etaHeader.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			// 
 			// directionHeader
 			// 
@@ -266,5 +273,6 @@
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
 		private System.Windows.Forms.ToolStripLabel toolStripLabel1;
 		private System.Windows.Forms.NumericUpDown maxSimultaneousTransfersNumericUpDown;
+		private System.Windows.Forms.ColumnHeader etaHeader;
 	}
 }

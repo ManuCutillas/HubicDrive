@@ -14,5 +14,16 @@ namespace HubicDrive {
 
 			return (Math.Sign(byteCount) * num).ToString() + " " + suf[place];
 		}
+
+
+		public static string HumanReadableTime(TimeSpan timeSpan) {
+			if (timeSpan == TimeSpan.Zero)
+				return "0";
+
+			if (timeSpan.Days > 0)
+				return timeSpan.Days + " days";
+
+			return timeSpan.Hours + ":" + timeSpan.Minutes + ":" + timeSpan.Seconds;
+		}
 	}
 }

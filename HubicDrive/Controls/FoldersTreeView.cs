@@ -188,7 +188,7 @@ namespace HubicDrive.Controls {
 				HubicDriveForm form = this.GetForm();
 
 				foreach (string file in ofd.FileNames)
-					form.queueForm.Add(this.OSContainer.Name, this.GetSelectedFolder().Path, file, Helper.HumanReadableSize(new FileInfo(file).Length), "upload");
+					form.queueForm.Add(this.OSContainer.Name, this.GetSelectedFolder().Path, file, new FileInfo(file).Length, "upload");
 
 				form.queueForm.Show();
 			}

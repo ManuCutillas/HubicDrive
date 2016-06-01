@@ -11,6 +11,11 @@ namespace HubicDrive.Controls {
 		private OSFolder OSFolder;
 
 
+		public FilesListView() {
+			this.SelectedIndexChanged += this.SelectChanged;
+		}
+
+
 		public HubicDriveForm GetForm() {
 			return (HubicDriveForm) this.FindForm();
 		}
@@ -24,10 +29,8 @@ namespace HubicDrive.Controls {
 			HubicDriveForm form = this.GetForm();
 
 			this.Items.Clear();
-			form.downloadToolButton.Enabled = true;
 
 			ListViewItem item;
-			ListViewItem.ListViewSubItem[] subItems;
 
 			OSFile file;
 			foreach (KeyValuePair<string, OSFile> entry in this.OSFolder.Files) {
@@ -35,16 +38,22 @@ namespace HubicDrive.Controls {
 
 				item = new ListViewItem(file.Name, 1);
 				item.Tag = file;
-				subItems = new ListViewItem.ListViewSubItem[] {
+				item.SubItems.AddRange(new ListViewItem.ListViewSubItem[] {
 					new ListViewItem.ListViewSubItem(item, file.Size),
 					new ListViewItem.ListViewSubItem(item, file.LastModified)
-				};
+				});
 
-				item.SubItems.AddRange(subItems);
 				this.Items.Add(item);
 			}
 
 			this.Enabled = true;
+		}
+
+
+		public void SelectChanged(object sender, EventArgs e) {
+			HubicDriveForm form = this.GetForm();
+
+			form.downloadToolButton.Enabled = this.SelectedItems.Count > 0;
 		}
 
 
@@ -67,7 +76,7 @@ namespace HubicDrive.Controls {
 				sfd.FileName = selectedFile.Name;
 
 				if (sfd.ShowDialog() == DialogResult.OK) {
-					form.queueForm.Add(this.OSContainer.Name, selectedFile.Path, sfd.FileName, selectedFile.Size, "download");
+					form.queueForm.Add(this.OSContainer.Name, selectedFile.Path, sfd.FileName, selectedFile.Bytes, "download");
 					form.queueForm.Show();
 				}
 
@@ -75,9 +84,11 @@ namespace HubicDrive.Controls {
 				FolderBrowserDialog fbd = new FolderBrowserDialog();
 
 				if (fbd.ShowDialog() == DialogResult.OK) {
+					OSFile selectedFile;
+
 					foreach (ListViewItem fileItem in this.SelectedItems) {
-						OSFile selectedFile = (OSFile) fileItem.Tag;
-						form.queueForm.Add(this.OSContainer.Name, selectedFile.Path, fbd.SelectedPath + "\\" + selectedFile.Name, selectedFile.Size, "download");
+						selectedFile = (OSFile) fileItem.Tag;
+						form.queueForm.Add(this.OSContainer.Name, selectedFile.Path, fbd.SelectedPath + "\\" + selectedFile.Name, selectedFile.Bytes, "download");
 					}
 
 					form.queueForm.Show();
@@ -87,35 +98,25 @@ namespace HubicDrive.Controls {
 
 
 		public async void DeleteSelected() {
-			if (this.SelectedItems.Count == 0)
-				return;
-
 			HubicDriveForm form = this.GetForm();
+			OSFile selectedFile;
 
 			foreach (ListViewItem selectedItem in this.SelectedItems) {
-				OSFile selectedFile = (OSFile) selectedItem.Tag;
+				selectedFile = (OSFile) selectedItem.Tag;
 
 				form.GetConnectionStatus().SetStatus("Status: deleting file " + selectedFile.Name + "...", true);
 
-				string path = this.OSContainer.Name + "/" + selectedFile.Path;
-
-				if (!await OSAPI.DeleteObject(path)) {
+				if (!await OSAPI.DeleteObject(this.OSContainer.Name, selectedFile.Path)) {
 					MessageBox.Show("Failed deleting the file " + selectedFile.Name, "Communication error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					form.GetConnectionStatus().SetStatus("Status: connected");
-					return;
+
+					break;
 				}
 
 				this.Items.Remove(selectedItem);
 				this.OSFolder.Files.Remove(selectedFile.Name);
-				form.GetConnectionStatus().SetStatus("Status: connected");
 			}
-		}
 
-
-		public void FileSelectedIndexChanged_Click(object sender, EventArgs e) {
-			HubicDriveForm form = this.GetForm();
-
-			form.downloadToolButton.Enabled = true;
+			form.GetConnectionStatus().SetStatus("Status: connected");
 		}
 	}
 }

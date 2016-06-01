@@ -4,8 +4,6 @@ using System.Net;
 using System.Windows.Forms;
 using HubicDrive.Forms;
 using System.IO;
-using HubicDrive.Hubic;
-using System.Net.Http.Handlers;
 
 namespace HubicDrive.Controls {
 	public partial class QueueListViewItem : ListViewItem {
@@ -46,15 +44,15 @@ namespace HubicDrive.Controls {
 			}
 		}
 
-		private string _Size;
-		public string Size {
+		private long _Bytes;
+		public long Bytes {
 			get {
-				return this._Size;
+				return this._Bytes;
 			}
 
 			private set {
-				this._Size = value;
-				this.SubItems["size"].Text = this.Size;
+				this._Bytes = value;
+				this.SubItems["size"].Text = Helper.HumanReadableSize(this.Bytes);
 			}
 		}
 
@@ -67,6 +65,18 @@ namespace HubicDrive.Controls {
 			private set {
 				this._Progress = value;
 				this.SubItems["progress"].Text = this.Progress;
+			}
+		}
+
+		private string _Eta;
+		public string Eta {
+			get {
+				return this._Eta;
+			}
+
+			private set {
+				this._Eta = value;
+				this.SubItems["eta"].Text = this.Eta;
 			}
 		}
 
@@ -91,9 +101,9 @@ namespace HubicDrive.Controls {
 		private DateTime LastUpdate;
 
 
-		public QueueListViewItem(string container, string remotePath, string localPath, string size, string direction) {
+		public QueueListViewItem(string container, string remotePath, string localPath, long bytes, string direction) {
 			ListViewSubItem lvsi;
-			foreach (string name in new string[] {"remotePath", "localPath", "size", "progress", "speed", "direction"}) {
+			foreach (string name in new string[] {"remotePath", "localPath", "size", "progress", "speed", "eta", "direction"}) {
 				lvsi = new ListViewSubItem();
 				lvsi.Name = name;
 				this.SubItems.Add(lvsi);
@@ -102,7 +112,7 @@ namespace HubicDrive.Controls {
 			this.Container = container;
 			this.RemotePath = remotePath;
 			this.LocalPath = localPath;
-			this.Size = size;
+			this.Bytes = bytes;
 			this.Direction = direction;
 		}
 
@@ -141,16 +151,6 @@ namespace HubicDrive.Controls {
 		}
 
 
-		private string GetSpeed(long transfered) {
-			string speed = Helper.HumanReadableSize((transfered - this.LastTransfered) / (DateTime.Now - this.LastUpdate).Seconds) + "/s";
-
-			this.LastUpdate = DateTime.Now;
-			this.LastTransfered = transfered;
-
-			return speed;
-		}
-
-
 		private void UpdateProgress(long transfered, int percentage) {
 			if (this.LastUpdate == null)
 				this.LastUpdate = DateTime.Now;
@@ -159,7 +159,16 @@ namespace HubicDrive.Controls {
 				this.Progress = percentage.ToString();
 				this.Progress += "%";
 
-				this.SubItems["speed"].Text = this.GetSpeed(transfered);
+				long speed = (transfered - this.LastTransfered) / (DateTime.Now - this.LastUpdate).Seconds;
+
+				this.LastUpdate = DateTime.Now;
+				this.LastTransfered = transfered;
+
+				this.SubItems["speed"].Text = Helper.HumanReadableSize(speed) + "/s";
+
+				long remainingSeconds = (this.Bytes - transfered) / speed;
+
+				this.SubItems["eta"].Text = Helper.HumanReadableTime(TimeSpan.FromSeconds(remainingSeconds));
 			}
 		}
 

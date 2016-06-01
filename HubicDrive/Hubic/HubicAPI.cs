@@ -27,78 +27,79 @@ namespace HubicDrive.Hubic {
 
 
 		private string GetOAuthID() {
-			SuperWebClient swc = new SuperWebClient();
+			Match match;
 
-			swc.MaxTries = 10;
-			swc.AllowAutoRedirect = false;
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.MaxTries = 10;
+				swc.AllowAutoRedirect = false;
 
-			swc.Values.Add("client_id", this.ClientId);
-			swc.Values.Add("redirect_uri", "http://localhost:8081/");
-			swc.Values.Add("scope", "credentials.r");
-			swc.Values.Add("response_type", "code");
-			swc.Values.Add("state", "RandomString");
+				swc.Values.Add("client_id", this.ClientId);
+				swc.Values.Add("redirect_uri", "http://localhost:8081/");
+				swc.Values.Add("scope", "credentials.r");
+				swc.Values.Add("response_type", "code");
+				swc.Values.Add("state", "RandomString");
 
-			string html = swc.DownloadString(this.BaseUrl + "oauth/auth/?" + swc.GetQuery());
-			Match match = Regex.Match(html, @"name=""oauth"" value=""(\d+)""", RegexOptions.IgnoreCase);
+				string html = swc.DownloadString(this.BaseUrl + "oauth/auth/?" + swc.GetQuery());
+				match = Regex.Match(html, @"name=""oauth"" value=""(\d+)""", RegexOptions.IgnoreCase);
+			}
 
 			if (this.ConnectionStatus != null)
 				this.ConnectionStatus.SetStatus("Status: connecting...", 20);
-
-			swc.Dispose();
 
 			return match.Groups[1].Value;
 		}
 
 
 		private string GetCode() {
-			SuperWebClient swc = new SuperWebClient();
+			Match match;
 
-			swc.MaxTries = 10;
-			swc.AllowAutoRedirect = false;
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.MaxTries = 10;
+				swc.AllowAutoRedirect = false;
 
-			swc.Values.Add("credentials", "r");
-			swc.Values.Add("oauth", this.GetOAuthID());
-			swc.Values.Add("action", "accepted");
-			swc.Values.Add("login", this.Login);
-			swc.Values.Add("user_pwd", this.Password);
+				swc.Values.Add("credentials", "r");
+				swc.Values.Add("oauth", this.GetOAuthID());
+				swc.Values.Add("action", "accepted");
+				swc.Values.Add("login", this.Login);
+				swc.Values.Add("user_pwd", this.Password);
 
-			swc.UploadValues(this.BaseUrl + "oauth/auth/", swc.Values);
+				swc.UploadValues(this.BaseUrl + "oauth/auth/", swc.Values);
 
-			Match match = Regex.Match(swc.RedirectUrl, @"code=(\w+)&", RegexOptions.IgnoreCase);
+				match = Regex.Match(swc.RedirectUrl, @"code=(\w+)&", RegexOptions.IgnoreCase);
+			}
 
 			if (this.ConnectionStatus != null)
 				this.ConnectionStatus.SetStatus("Status: connecting...", 40);
-
-			swc.Dispose();
 
 			return match.Groups[1].Value;
 		}
 
 
 		private string GetAccessToken() {
-			SuperWebClient swc = new SuperWebClient();
-			swc.Headers[HttpRequestHeader.Authorization] = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(this.ClientId + ":" + this.ClientSecret));
+			JObject jsonObject;
 
-			swc.MaxTries = 10;
-			swc.AllowAutoRedirect = false;
-			swc.UseDefaultCredentials = true;
-			swc.Credentials = new NetworkCredential(this.ClientId, this.ClientSecret);
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.Headers[HttpRequestHeader.Authorization] = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(this.ClientId + ":" + this.ClientSecret));
 
-			if (this.RefreshToken == null) {
-				swc.Values.Add("code", this.GetCode());
-				swc.Values.Add("redirect_uri", "http://localhost:8081/");
-				swc.Values.Add("grant_type", "authorization_code");
+				swc.MaxTries = 10;
+				swc.AllowAutoRedirect = false;
+				swc.UseDefaultCredentials = true;
+				swc.Credentials = new NetworkCredential(this.ClientId, this.ClientSecret);
 
-			} else {
-				swc.Values.Add("refresh_token", this.RefreshToken);
-				swc.Values.Add("grant_type", "refresh_token");
+				if (this.RefreshToken == null) {
+					swc.Values.Add("code", this.GetCode());
+					swc.Values.Add("redirect_uri", "http://localhost:8081/");
+					swc.Values.Add("grant_type", "authorization_code");
+
+				} else {
+					swc.Values.Add("refresh_token", this.RefreshToken);
+					swc.Values.Add("grant_type", "refresh_token");
+				}
+
+				string response = System.Text.Encoding.Default.GetString(swc.UploadValues(this.BaseUrl + "oauth/token/", swc.Values));
+
+				jsonObject = JObject.Parse(response);
 			}
-
-			string response = System.Text.Encoding.Default.GetString(swc.UploadValues(this.BaseUrl + "oauth/token/", swc.Values));
-
-			swc.Dispose();
-
-			JObject jsonObject = JObject.Parse(response);
 
 			if (this.RefreshToken == null)
 				this.RefreshToken = (string) jsonObject.SelectToken("refresh_token");
@@ -111,12 +112,13 @@ namespace HubicDrive.Hubic {
 
 
 		public JObject getCredentials() {
-			SuperWebClient swc = new SuperWebClient();
-			swc.Headers[HttpRequestHeader.Authorization] = "Bearer " + this.GetAccessToken();
+			string response;
 
-			string response = swc.DownloadString(this.BaseUrl + "1.0/account/credentials");
+			using (SuperWebClient swc = new SuperWebClient()) {
+				swc.Headers[HttpRequestHeader.Authorization] = "Bearer " + this.GetAccessToken();
 
-			swc.Dispose();
+				response = swc.DownloadString(this.BaseUrl + "1.0/account/credentials");
+			}
 
 			return JObject.Parse(response);
 		}

@@ -20,13 +20,13 @@ namespace HubicDrive.Forms {
 		}
 
 
-		public void Add(string container, string remotePath, string localPath, string size, string direction) {
+		public void Add(string container, string remotePath, string localPath, long bytes, string direction) {
 			foreach (QueueListViewItem queueItem in this.queueListView.Items) {
 				if ((queueItem.Container == container && queueItem.RemotePath == remotePath) && (direction == "download" || queueItem.LocalPath == localPath))
 					return;
 			}
 
-			this.queueListView.Items.Add(new QueueListViewItem(container, remotePath, localPath, size, direction));
+			this.queueListView.Items.Add(new QueueListViewItem(container, remotePath, localPath, bytes, direction));
 
 			this.UpdateStatus();
 		}
