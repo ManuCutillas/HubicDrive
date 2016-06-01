@@ -10,155 +10,100 @@ using System.Diagnostics;
 
 namespace HubicDrive.Hubic {
 	public class HubicAPI {
-		private string login = null;
-		private string password = null;
-		private readonly string clientId = "api_hubic_Whv005ooGyoXATgXAw77MmL5KuEfrf7Y";
-		private string authorization = null;
-		private string code = null;
-		private string refreshToken = null;
-		private readonly string clientSecret = "8pXxSAHJ0C4ieLfX4pxwEJabaGZjj2Ci5kPloYauRdgW0IcElIlSiwiljB4zzPs1";
-		private string baseUrl = "https://api.hubic.com/";
-		public string accessToken = null;
-		private ConnectionStatus connectionStatus;
+		private string Login = null;
+		private string Password = null;
+		private readonly string ClientId = "api_hubic_Whv005ooGyoXATgXAw77MmL5KuEfrf7Y";
+		private string Authorization = null;
+		private string RefreshToken = null;
+		private readonly string ClientSecret = "8pXxSAHJ0C4ieLfX4pxwEJabaGZjj2Ci5kPloYauRdgW0IcElIlSiwiljB4zzPs1";
+		private string BaseUrl = "https://api.hubic.com/";
+		public string AccessToken = null;
+		private ConnectionStatus ConnectionStatus;
 
 
 		public HubicAPI(string login, string password, ConnectionStatus connectionStatus = null) {
-			this.login = login;
-			this.password = password;
-			this.connectionStatus = connectionStatus;
+			this.Login = login;
+			this.Password = password;
+			this.ConnectionStatus = connectionStatus;
 		}
 
 
-		private string getOAuthID() {
-			string parameters = "client_id=" + this.clientId;
-			parameters += "&redirect_uri=http%3A%2F%2Flocalhost%3A8081%2F";
-			parameters += "&scope=credentials.r";
-			parameters += "&response_type=code";
-			parameters += "&state=RandomString";
+		private string GetOAuthID() {
+			SuperWebClient swc = new SuperWebClient();
+			swc.MaxTries = 10;
+			swc.Values.Add("client_id", this.ClientId);
+			swc.Values.Add("redirect_uri", "http://localhost:8081/");
+			swc.Values.Add("scope", "credentials.r");
+			swc.Values.Add("response_type", "code");
+			swc.Values.Add("state", "RandomString");
 
-			HttpWebRequest request;
-			HttpWebResponse response;
-			StreamReader sReader;
-			string html;
-			Match match;
+			string html = swc.DownloadString(this.BaseUrl + "oauth/auth/?" + swc.GetQuery());
+			Match match = Regex.Match(html, @"name=""oauth"" value=""(\d+)""", RegexOptions.IgnoreCase);
 
-			int max_tries = 10;
-			for (int tries = 0; tries < max_tries; tries++) {
-				try {
-					request = (HttpWebRequest) WebRequest.Create(baseUrl + "oauth/auth/?" + parameters);
-					request.Timeout = 4000;
+			if (this.ConnectionStatus != null)
+				this.ConnectionStatus.SetStatus("Status: connecting...", 20);
 
-					response = (HttpWebResponse) request.GetResponse();
+			swc.Dispose();
 
-					using (sReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)) {
-						html = sReader.ReadToEnd();
-					}
-
-					response.Close();
-
-					match = Regex.Match(html, @"name=""oauth"" value=""(\d+)""", RegexOptions.IgnoreCase);
-
-					if (this.connectionStatus != null)
-						this.connectionStatus.SetStatus("Status: connecting...", 20);
-
-					return match.Groups[1].Value;
-
-				} catch (WebException e) {
-					if (this.connectionStatus != null)
-						this.connectionStatus.SetStatus("Status: connecting...", (int) tries * 20 / max_tries);
-
-					if (tries == max_tries - 1)
-						MessageBox.Show("Unable to get OAuth ID", "Problem connecting to Hubic", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-			}
-
-			return null;
+			return match.Groups[1].Value;
 		}
 
 
-		private string getCode() {
-			if (this.code != null)
-				return this.code;
+		private string GetCode() {
+			SuperWebClient swc = new SuperWebClient();
+			swc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
 
-			string parameters = "credentials=r";
-			parameters += "&oauth=" + this.getOAuthID();
-			parameters += "&action=accepted";
-			parameters += "&login=" + this.login;
-			parameters += "&user_pwd=" + this.password;
+			swc.MaxTries = 10;
+			swc.AllowAutoRedirect = false;
 
-			byte[] data = Encoding.ASCII.GetBytes(parameters);
+			swc.Values.Add("credentials", "r");
+			swc.Values.Add("oauth", this.GetOAuthID());
+			swc.Values.Add("action", "accepted");
+			swc.Values.Add("login", this.Login);
+			swc.Values.Add("user_pwd", this.Password);
 
-			HttpWebRequest request;
-			Stream stream;
-			HttpWebResponse response;
-			string redirectURL;
-			Match match;
+			swc.UploadValues(this.BaseUrl + "oauth/auth/", swc.Values);
 
-			for (int tries = 0; tries < 5 && this.code == null; tries++) {
-				try {
-					request = (HttpWebRequest) WebRequest.Create(this.baseUrl + "oauth/auth/");
-					request.Method = "POST";
-					request.ContentType = "application/x-www-form-urlencoded";
-					request.AllowAutoRedirect = false;
-					request.ContentLength = data.Length;
+			Match match = Regex.Match(swc.RedirectUrl, @"code=(\w+)&", RegexOptions.IgnoreCase);
 
-					using (stream = request.GetRequestStream()) {
-						stream.Write(data, 0, data.Length);
-					}
+			if (this.ConnectionStatus != null)
+				this.ConnectionStatus.SetStatus("Status: connecting...", 40);
 
-					response = (HttpWebResponse) request.GetResponse();
-					redirectURL = response.Headers["Location"];
-					response.Close();
+			swc.Dispose();
 
-					match = Regex.Match(redirectURL, @"code=(\w+)&", RegexOptions.IgnoreCase);
-
-					this.code = match.Groups[1].Value;
-
-				} catch (Exception e) {
-					if (this.connectionStatus != null)
-						this.connectionStatus.SetStatus("Connecting...", tries * 5 + 20);
-
-					if (tries == 4)
-						MessageBox.Show("Unable to get the auth code", "Problem connecting to Hubic", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-			}
-
-			if (this.connectionStatus != null && this.code != null)
-				this.connectionStatus.SetStatus("Status: connecting...", 40);
-
-			return this.code;
+			return match.Groups[1].Value;
 		}
 
 
 		private string getAuthorization() {
-			if (this.authorization != null)
-				return this.authorization;
+			if (this.Authorization != null)
+				return this.Authorization;
 
-			this.authorization = Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(this.clientId + ":" + this.clientSecret));
+			this.Authorization = Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(this.ClientId + ":" + this.ClientSecret));
 
-			if (this.connectionStatus != null)
-				this.connectionStatus.SetStatus("Status: connecting...", 60);
+			if (this.ConnectionStatus != null)
+				this.ConnectionStatus.SetStatus("Status: connecting...", 60);
 
-			return this.authorization;
+			return this.Authorization;
 		}
 
 
 		private string getAccessToken() {
 			string parameters = "";
 
-			if (this.refreshToken == null) {
-				parameters = "code=" + this.getCode();
+			if (this.RefreshToken == null) {
+				parameters = "code=" + this.GetCode();
 				parameters += "&redirect_uri=http%3A%2F%2Flocalhost%3A8081%2F";
 				parameters += "&grant_type=authorization_code";
 
 			} else {
-				parameters = "refresh_token=" + this.refreshToken;
+				parameters = "refresh_token=" + this.RefreshToken;
 				parameters += "&grant_type=refresh_token";
 			}
 
 			byte[] data = Encoding.UTF8.GetBytes(parameters);
 
-			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.baseUrl + "oauth/token/");
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.BaseUrl + "oauth/token/");
 			request.Headers[HttpRequestHeader.Authorization] = "Basic " + this.getAuthorization();
 			request.Method = "POST";
 			request.ContentType = "application/x-www-form-urlencoded";
@@ -178,11 +123,11 @@ namespace HubicDrive.Hubic {
 
 			response.Close();
 
-			if (this.refreshToken == null)
-				this.refreshToken = (string) jsonResponse.SelectToken("refresh_token");
+			if (this.RefreshToken == null)
+				this.RefreshToken = (string) jsonResponse.SelectToken("refresh_token");
 
-			if (this.connectionStatus != null)
-				this.connectionStatus.SetStatus("Status: connecting...", 80);
+			if (this.ConnectionStatus != null)
+				this.ConnectionStatus.SetStatus("Status: connecting...", 80);
 
 			return (string) jsonResponse.SelectToken("access_token");
 		}
@@ -191,7 +136,7 @@ namespace HubicDrive.Hubic {
 		public string getCredentials() {
 			string accessToken = this.getAccessToken();
 
-			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.baseUrl + "1.0/account/credentials");
+			HttpWebRequest request = (HttpWebRequest) WebRequest.Create(this.BaseUrl + "1.0/account/credentials");
 			request.Headers[HttpRequestHeader.Authorization] = "Bearer " + this.getAccessToken();
 
 			HttpWebResponse response = (HttpWebResponse) request.GetResponse();
@@ -203,8 +148,8 @@ namespace HubicDrive.Hubic {
 
 			response.Close();
 
-			if (this.connectionStatus != null)
-				this.connectionStatus.SetStatus("Status: connecting...", 100);
+			if (this.ConnectionStatus != null)
+				this.ConnectionStatus.SetStatus("Status: connecting...", 100);
 
 			return credentials;
 		}
@@ -220,7 +165,7 @@ namespace HubicDrive.Hubic {
 						wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0");
 						wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
 
-						string response = wc.UploadString("https://hubic.com/home/logcheck.php", "sign-in-email=" + WebUtility.UrlEncode(this.login) + "&sign-in-password=" + WebUtility.UrlEncode(this.password));
+						string response = wc.UploadString("https://hubic.com/home/logcheck.php", "sign-in-email=" + WebUtility.UrlEncode(this.Login) + "&sign-in-password=" + WebUtility.UrlEncode(this.Password));
 
 						string token = Regex.Match(response, @"prepareUpload\\/"",""token"":""(\w+)""").Groups[1].Value;
 						long timestamp = (long) (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds;
@@ -240,7 +185,7 @@ namespace HubicDrive.Hubic {
 
 						return new HubicSignature(jsonObject["answer"]["hubic"]["signature"].ToString(), jsonObject["answer"]["hubic"]["max_file_size"].ToString(), jsonObject["answer"]["hubic"]["expires"].ToString());
 
-					} catch (Exception e) {
+					} catch (Exception) {
 					}
 				}
 			}

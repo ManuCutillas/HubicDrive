@@ -85,9 +85,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration.cs" />
-    <Compile Include="Controls\SWCTransferCompletedEventArgs.cs" />
-    <Compile Include="Controls\SWCTransferProgressChangedEventArgs.cs" />
-    <Compile Include="Controls\SuperWebClient.cs" />
+    <Compile Include="Controls\SuperWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\ConfigurationForm.cs">
       <SubType>Form</SubType>
     </Compile>

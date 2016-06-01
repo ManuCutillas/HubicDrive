@@ -18,8 +18,8 @@ namespace HubicDrive.OpenStack {
 
 
 		public OpenStackAPI(HubicAPI HAPI) {
-            JObject credentials = JObject.Parse("{\"token\":\"2963b58b762742c4a3e25721860a7ae3\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
-            //JObject credentials = JObject.Parse(HAPI.getCredentials());
+         //JObject credentials = JObject.Parse("{\"token\":\"2963b58b762742c4a3e25721860a7ae3\",\"endpoint\":\"https://lb9911.hubic.ovh.net/v1/AUTH_6f5b4a82af3682dfb7a8034f78e8dcb1\",\"expires\":\"2016-05-14T20:16:03+02:00\"}");
+         JObject credentials = JObject.Parse(HAPI.getCredentials());
 			Debug.WriteLine(credentials.ToString());
 
 /*			Configuration Config = new Configuration();
@@ -67,26 +67,6 @@ namespace HubicDrive.OpenStack {
 				return true;
 			}
 		}
-
-		/*
-		public async Task<SuperWebClient> UploadObject(string container, string remotePath, string localPath, string signature, string maxFileSize, string expires, Action<object, HttpProgressEventArgs> transferProgressChangedCallback, Action<object, SWCTransferCompletedEventArgs> transferCompletedCallback) {
-			SuperWebClient mwc = new SuperWebClient();
-
-			mwc.progressHandler.HttpSendProgress += new EventHandler<HttpProgressEventArgs>(transferProgressChangedCallback);
-			mwc.TransferCompleted += new SuperWebClient.TransferCompletedHandler(transferCompletedCallback);
-			
-			mwc.AddValue("max_file_size", maxFileSize);
-			mwc.AddValue("max_file_count", "1");
-			mwc.AddValue("expires", expires);
-			mwc.AddValue("redirect", "");
-			mwc.AddValue("signature", signature);
-			mwc.AddValue("name", Path.GetFileName(localPath));
-			mwc.AddFile("file1", localPath);
-
-			await mwc.MultipartUploadTaskAsync(this.endpoint + "/" + container + "/" + remotePath);
-
-			return mwc;
-		}*/
 
 		
 		public WebClient UploadObject(string container, string remotePath, string localPath, Action<object, UploadProgressChangedEventArgs> uploadProgressChangedCallback, Action<object, UploadFileCompletedEventArgs> uploadCompletedCallback) {

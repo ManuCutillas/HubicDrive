@@ -1,92 +1,68 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Handlers;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HubicDrive.Controls {
-	public class SuperWebClient {
-		private NameValueCollection Values = new NameValueCollection();
-		private NameValueCollection Files = new NameValueCollection();
-		public ProgressMessageHandler progressHandler = new ProgressMessageHandler();
+	public class SuperWebClient : WebClient {
+		private Uri Uri { get; set; }
 
-		public void AddValue(string name, string value) {
-			this.Values.Add(name, value);
+		public CookieCollection Cookies { get; private set; } = new CookieCollection();
+		private CookieContainer SessionCookies = new CookieContainer();
+
+		public NameValueCollection Values = new NameValueCollection();
+		public NameValueCollection Files = new NameValueCollection();
+
+		public int Timeout { get; set; } = 10;
+		public int Tries { get; set; } = 0;
+		public int MaxTries { get; set; } = 1;
+		public bool AllowAutoRedirect { get; set; } = true;
+		public string RedirectUrl { get; private set; }
+
+
+		public string GetQuery() {
+			string query = "";
+
+			foreach (string key in this.Values)
+				query += WebUtility.UrlEncode(key) + "=" + WebUtility.UrlEncode(this.Values[key]) + "&";
+
+			return query.Substring(0, query.Length - 1);
 		}
 
 
-		public void AddFile(string name, string file) {
-			this.Files.Add(name, file);
+		protected override WebRequest GetWebRequest(Uri uri) {
+			HttpWebRequest request = (HttpWebRequest) base.GetWebRequest(uri);
+
+			request.CookieContainer = this.SessionCookies;
+			request.Timeout = this.Timeout * 1000;
+			request.AllowAutoRedirect = this.AllowAutoRedirect;
+
+			return request;
 		}
 
 
-		public async Task<HttpResponseMessage> MultipartUploadTaskAsync(string url) {
-			//https://blogs.msdn.microsoft.com/johan/2006/11/15/are-you-getting-outofmemoryexceptions-when-uploading-large-files/
-			Control.CheckForIllegalCrossThreadCalls = false;
+		protected override WebResponse GetWebResponse(WebRequest request) {
+			try {
+				HttpWebResponse response = (HttpWebResponse) base.GetWebResponse(request);
+				this.Cookies = response.Cookies;
+				this.RedirectUrl = response.Headers["Location"];
 
-			//HttpClientHandler handler = new HttpClientHandler();
+				return response;
 
-//			ProgressMessageHandler progressHandler = new ProgressMessageHandler();
-//			progressHandler.HttpSendProgress += this.OnTransferProgressChanged;
+			} catch (WebException) {
+				this.Tries++;
 
-			using (HttpClient client = HttpClientFactory.Create(progressHandler)) {
-				client.Timeout = TimeSpan.FromDays(5);
+				if (this.Tries < this.MaxTries)
+					this.GetWebResponse(request);
 
-				using (MultipartFormDataContent content = new MultipartFormDataContent()) {
-					string value;
-
-					foreach (string name in this.Values) {
-						value = this.Values[name];
-
-						content.Add(new StringContent(value), name);
-					}
-
-					foreach (string name in this.Files) {
-						value = this.Files[name];
-
-						StreamContent fileStream = new StreamContent(new FileStream(value, FileMode.Open, FileAccess.Read));
-						fileStream.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-						content.Add(fileStream, name, Path.GetFileName(value));
-					}
-
-					HttpRequestHeaders headers = client.DefaultRequestHeaders;
-					headers.ExpectContinue = false;
-					headers.TryAddWithoutValidation("Connection", "keep-alive");
-					headers.TryAddWithoutValidation("Origin", "https://hubic.com");
-					headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Maxthon/4.4.8.2000 Chrome/30.0.1599.101 Safari/537.36");
-					headers.TryAddWithoutValidation("Accept", "*/*");
-					headers.TryAddWithoutValidation("DNT", "1");
-					headers.TryAddWithoutValidation("Referer", "https://hubic.com/home/browser/");
-					headers.TryAddWithoutValidation("Accept-Encoding", "gzip,deflate");
-					headers.TryAddWithoutValidation("Accept-Language", "es-ES");
-
-					HttpResponseMessage response = await client.PostAsync(url, content);
-					this.OnTransferCompleted();
-
-					return response;
-				}
+				throw;
 			}
-		}
-
-		public delegate void TransferProgressChangedHandler(object o, SWCTransferProgressChangedEventArgs e);
-		public event TransferProgressChangedHandler TransferProgressChanged;
-
-		public delegate void TransferCompletedHandler(object o, SWCTransferCompletedEventArgs e);
-		public event TransferCompletedHandler TransferCompleted;
-
-
-		private void OnTransferProgressChanged(object sender, HttpProgressEventArgs e) {
-			if (this.TransferProgressChanged != null)
-				this.TransferProgressChanged.Invoke(this, new SWCTransferProgressChangedEventArgs(e.BytesTransferred, (long) e.TotalBytes));
-		}
-		
-
-		private void OnTransferCompleted() {
-			if (this.TransferCompleted != null)
-				this.TransferCompleted.Invoke(this, new SWCTransferCompletedEventArgs());
 		}
 	}
 }
