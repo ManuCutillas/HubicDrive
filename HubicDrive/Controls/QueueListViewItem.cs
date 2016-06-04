@@ -4,6 +4,8 @@ using System.Net;
 using System.Windows.Forms;
 using HubicDrive.Forms;
 using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace HubicDrive.Controls {
 	public partial class QueueListViewItem : ListViewItem {
@@ -100,6 +102,8 @@ namespace HubicDrive.Controls {
 
 		private DateTime LastUpdate;
 
+		public int Tries = 0;
+
 
 		public QueueListViewItem(string container, string remotePath, string localPath, long bytes, string direction) {
 			ListViewSubItem lvsi;
@@ -137,6 +141,26 @@ namespace HubicDrive.Controls {
 			} else if (this.Direction == "download") {
 				this.wc = form.OSAPI.DownloadObject(this.Container, this.RemotePath, this.LocalPath, this.DownloadProgressChanged, this.TransferCompleted);
 			}
+
+			this.LastUpdate = DateTime.Now;
+
+			Task.Run(() => {
+				Control.CheckForIllegalCrossThreadCalls = false;
+
+				while (this.Progress == "Connecting...") {
+					if ((DateTime.Now - this.LastUpdate).Seconds > 10) {
+						this.Stop();
+						//this.Start();
+
+						//this.Tries++;
+						//this.SubItems["progress"].Text = this.Tries.ToString();
+
+						return;
+					}
+
+					Thread.Sleep(1000);
+				}
+			});
 		}
 
 
@@ -147,6 +171,7 @@ namespace HubicDrive.Controls {
 			this.wc.CancelAsync();
 
 			this.Progress = "Cancelled";
+			this.SubItems["eta"].Text = "";
 			this.Status = "stopped";
 		}
 

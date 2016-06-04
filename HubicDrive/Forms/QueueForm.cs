@@ -3,6 +3,7 @@ using System;
 using System.Windows.Forms;
 using HubicDrive.OpenStack;
 using HubicDrive.Hubic;
+using System.Collections;
 
 namespace HubicDrive.Forms {
 	public partial class QueueForm : Form {
@@ -68,6 +69,9 @@ namespace HubicDrive.Forms {
 				return;
 
 			foreach (QueueListViewItem queueItem in this.queueListView.Items) {
+				if (sender.ToString() == "Selected" && queueItem.Selected == false)
+					continue;
+
 				if (queueItem.Status == "stopped" && transfersRunning < this.MaxSimultaneousTransfers) {
 					queueItem.Start();
 					transfersRunning++;

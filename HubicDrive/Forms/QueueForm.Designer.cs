@@ -25,7 +25,6 @@
 		private void InitializeComponent() {
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(QueueForm));
 			this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-			this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
 			this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
 			this.removeStripSplitButton = new System.Windows.Forms.ToolStripSplitButton();
 			this.removeSelectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,6 +44,9 @@
 			this.speedHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.etaHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.directionHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+			this.selectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.pendingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStrip1.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.maxSimultaneousTransfersNumericUpDown)).BeginInit();
@@ -54,7 +56,7 @@
 			// 
 			this.toolStrip1.AllowMerge = false;
 			this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1,
+            this.toolStripDropDownButton1,
             this.toolStripButton2,
             this.removeStripSplitButton,
             this.toolStripSeparator1,
@@ -64,16 +66,6 @@
 			this.toolStrip1.Size = new System.Drawing.Size(957, 25);
 			this.toolStrip1.TabIndex = 0;
 			this.toolStrip1.Text = "toolStrip1";
-			// 
-			// toolStripButton1
-			// 
-			this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-			this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-			this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-			this.toolStripButton1.Name = "toolStripButton1";
-			this.toolStripButton1.Size = new System.Drawing.Size(35, 22);
-			this.toolStripButton1.Text = "Start";
-			this.toolStripButton1.Click += new System.EventHandler(this.Start);
 			// 
 			// toolStripButton2
 			// 
@@ -100,14 +92,14 @@
 			// removeSelectedToolStripMenuItem
 			// 
 			this.removeSelectedToolStripMenuItem.Name = "removeSelectedToolStripMenuItem";
-			this.removeSelectedToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+			this.removeSelectedToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
 			this.removeSelectedToolStripMenuItem.Text = "Selected";
 			this.removeSelectedToolStripMenuItem.Click += new System.EventHandler(this.RemoveSelected);
 			// 
 			// removeFinishedToolStripMenuItem
 			// 
 			this.removeFinishedToolStripMenuItem.Name = "removeFinishedToolStripMenuItem";
-			this.removeFinishedToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+			this.removeFinishedToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
 			this.removeFinishedToolStripMenuItem.Text = "Finished";
 			this.removeFinishedToolStripMenuItem.Click += new System.EventHandler(this.RemoveFinished);
 			// 
@@ -148,7 +140,7 @@
 			// 
 			// maxSimultaneousTransfersNumericUpDown
 			// 
-			this.maxSimultaneousTransfersNumericUpDown.Location = new System.Drawing.Point(327, 3);
+			this.maxSimultaneousTransfersNumericUpDown.Location = new System.Drawing.Point(424, 3);
 			this.maxSimultaneousTransfersNumericUpDown.Maximum = new decimal(new int[] {
             10,
             0,
@@ -229,6 +221,32 @@
 			// 
 			this.directionHeader.Text = "Direction";
 			// 
+			// toolStripDropDownButton1
+			// 
+			this.toolStripDropDownButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+			this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.selectedToolStripMenuItem,
+            this.pendingToolStripMenuItem});
+			this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
+			this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
+			this.toolStripDropDownButton1.Size = new System.Drawing.Size(44, 22);
+			this.toolStripDropDownButton1.Text = "Start";
+			// 
+			// selectedToolStripMenuItem
+			// 
+			this.selectedToolStripMenuItem.Name = "selectedToolStripMenuItem";
+			this.selectedToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.selectedToolStripMenuItem.Text = "Selected";
+			this.selectedToolStripMenuItem.Click += new System.EventHandler(this.Start);
+			// 
+			// pendingToolStripMenuItem
+			// 
+			this.pendingToolStripMenuItem.Name = "pendingToolStripMenuItem";
+			this.pendingToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.pendingToolStripMenuItem.Text = "Pending";
+			this.pendingToolStripMenuItem.Click += new System.EventHandler(this.Start);
+			// 
 			// QueueForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -254,7 +272,6 @@
 		#endregion
 
 		private System.Windows.Forms.ToolStrip toolStrip1;
-		private System.Windows.Forms.ToolStripButton toolStripButton1;
 		private System.Windows.Forms.ToolStripButton toolStripButton2;
 		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel queueStripStatusLabel;
@@ -274,5 +291,8 @@
 		private System.Windows.Forms.ToolStripLabel toolStripLabel1;
 		private System.Windows.Forms.NumericUpDown maxSimultaneousTransfersNumericUpDown;
 		private System.Windows.Forms.ColumnHeader etaHeader;
+		private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
+		private System.Windows.Forms.ToolStripMenuItem selectedToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem pendingToolStripMenuItem;
 	}
 }
